@@ -64,7 +64,14 @@ function sendImage($filename, $browser_cache) {
   header("Cache-Control: private, max-age=".$browser_cache);
   header('Expires: '.gmdate('D, d M Y H:i:s', time()+$browser_cache).' GMT');
   header('Content-Length: '.filesize($filename));
-  readfile($filename);
+  if (is_callable('apache_get_modules') &&
+    in_array('mod_xsendfile', apache_get_modules()) {
+	header('X-Sendfile: '.$filename);
+  } else if (substr($_SERVER["SERVER_SOFTWARE"], 0, 5) === 'nginx') {
+    header('X-Accel-Redirect: '.substr($filename, strlen(__DIR__)));
+  } else {
+    readfile($filename);
+  }
   exit();
 }
 
